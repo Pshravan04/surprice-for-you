@@ -1,0 +1,194 @@
+/* =============================================
+   GLOBAL STYLES — A Little World Made For Her
+   ============================================= */
+
+/* Pixel font import fallback if Google Fonts is blocked */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap');
+
+/* ── CSS Variables ───────────────────────────── */
+:root {
+  /* Color Palette */
+  --bg: #FFF0F5;
+  --soft-pink: #F8BBD0;
+  --rose-pink: #F4A6C1;
+  --lavender: #DCCBFF;
+  --deep-lavender: #A88BE8;
+  --light-purple: #EDE3FF;
+  --text: #59445F;
+  --dark-outline: #725B82;
+  --white: #FFFFFF;
+
+  /* Gradients */
+  --grad-pink-lav: linear-gradient(135deg, #F8BBD0 0%, #DCCBFF 100%);
+  --grad-lav-pink: linear-gradient(135deg, #EDE3FF 0%, #F8BBD0 100%);
+  --grad-deep: linear-gradient(135deg, #DCCBFF 0%, #A88BE8 100%);
+
+  /* Typography */
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-terminal: 'VT323', monospace;
+  --font-romantic: 'Georgia', 'Times New Roman', serif;
+
+  /* Sizing */
+  --console-max-w: 400px;
+  --border-pixel: 3px solid var(--dark-outline);
+  --shadow-pixel: 4px 4px 0px var(--dark-outline);
+  --shadow-pixel-sm: 2px 2px 0px var(--dark-outline);
+}
+
+/* ── Reset & Base ────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-romantic);
+  background-color: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Safe area for iPhone notch / home bar */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Pixel border utility ────────────────────── */
+.pixel-border {
+  border: var(--border-pixel);
+  box-shadow: var(--shadow-pixel);
+  image-rendering: pixelated;
+}
+
+.pixel-border-sm {
+  border: 2px solid var(--dark-outline);
+  box-shadow: var(--shadow-pixel-sm);
+}
+
+/* ── Pixel button base ───────────────────────── */
+.pixel-btn {
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  color: var(--text);
+  background: var(--soft-pink);
+  border: 2px solid var(--dark-outline);
+  box-shadow: 3px 3px 0 var(--dark-outline);
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  image-rendering: pixelated;
+  letter-spacing: 0.5px;
+}
+
+.pixel-btn:active,
+.pixel-btn.pressed {
+  box-shadow: 1px 1px 0 var(--dark-outline);
+  transform: translate(2px, 2px);
+}
+
+.pixel-btn:hover:not(:active) {
+  background: var(--rose-pink);
+}
+
+/* ── Typewriter cursor ───────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 2px;
+  background: var(--text);
+  animation: blink 0.8s step-end infinite;
+  margin-left: 2px;
+  vertical-align: middle;
+}
+
+/* ── Scanline overlay ────────────────────────── */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(89, 68, 95, 0.04) 2px,
+    rgba(89, 68, 95, 0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Floating animation ──────────────────────── */
+@keyframes floatUp {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+  100% { transform: translateY(-120px) rotate(15deg); opacity: 0; }
+}
+
+@keyframes gentleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+@keyframes gentleFloatRev {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%       { transform: translateY(-8px) rotate(3deg); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Particle heart ──────────────────────────── */
+@keyframes particleRise {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.4); }
+}
+
+/* ── Reduced motion ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
