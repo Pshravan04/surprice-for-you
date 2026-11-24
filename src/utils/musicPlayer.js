@@ -1,121 +1,88 @@
-// Global music player state (singleton outside React)
+// Music player utility using HTML5 Audio for "The Way I Love You" by Michal Leah
 let audio = null;
 let currentVolume = 0.5;
+let isPlaying = false;
+let fadeTimer = null;
 
-// Use a royalty-free, bundled audio file
-// We'll generate a simple romantic melody via Web Audio API
-// since we can't guarantee an audio file exists.
+function getAudio() {
+  if (!audio) {
+    audio = new Audio('/the-way-i-love-you.mp3');
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = currentVolume;
 
-let audioCtx = null;
-
-/**
- * Creates a simple romantic melody using Web Audio API as fallback.
- * Falls back gracefully if audio context fails.
- */
-function createMelodyBuffer(ctx) {
-  // Simple waltz-like repeating pattern (C major / relative minor)
-  const notes = [
-    // Hz, duration in beats
-    [523.25, 1], [659.25, 1], [783.99, 1], // C E G
-    [698.46, 1], [587.33, 1], [523.25, 2], // F D C (long)
-    [587.33, 1], [659.25, 1], [698.46, 1], // D E F
-    [659.25, 1], [587.33, 1], [523.25, 2], // E D C (long)
-    [440.00, 1], [523.25, 1], [587.33, 1], // A C D
-    [523.25, 1], [493.88, 1], [440.00, 2], // C B A (long)
-    [392.00, 1], [440.00, 1], [493.88, 1], // G A B
-    [523.25, 4],                            // C (long hold)
-  ];
-
-  const BPM = 72;
-  const beatDur = 60 / BPM;
-  const totalDur = notes.reduce((acc, [, d]) => acc + d * beatDur, 0);
-  const sr = ctx.sampleRate;
-  const buffer = ctx.createBuffer(2, Math.ceil(totalDur * sr), sr);
-
-  for (let ch = 0; ch < 2; ch++) {
-    const data = buffer.getChannelData(ch);
-    let offset = 0;
-    for (const [freq, beats] of notes) {
-      const dur = beats * beatDur;
-      const len = Math.ceil(dur * sr);
-      for (let i = 0; i < len; i++) {
-        const t = i / sr;
-        const env = Math.min(1, t * 8) * Math.max(0, 1 - (t - dur * 0.6) / (dur * 0.4));
-        // Simple sine + harmonics for a soft piano-like sound
-        const sample =
-          Math.sin(2 * Math.PI * freq * t) * 0.4 +
-          Math.sin(2 * Math.PI * freq * 2 * t) * 0.15 +
-          Math.sin(2 * Math.PI * freq * 3 * t) * 0.05;
-        data[offset + i] = sample * env * 0.3;
+    // Fallback to m4a if mp3 has issue in any environment
+    audio.addEventListener('error', () => {
+      console.warn('Primary mp3 failed, falling back to m4a');
+      if (audio && !audio.src.endsWith('.m4a')) {
+        audio.src = '/the-way-i-love-you.m4a';
+        if (isPlaying) {
+          audio.play().catch(e => console.warn('Fallback play error:', e));
+        }
       }
-      offset += len;
-    }
+    });
   }
-  return buffer;
+  return audio;
 }
 
-let bufferSource = null;
-let gainNode = null;
-let isPlaying = false;
-
 export async function initMusic() {
-  try {
-    if (!audioCtx) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (audioCtx.state === 'suspended') {
-      await audioCtx.resume();
-    }
-    gainNode = audioCtx.createGain();
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.connect(audioCtx.destination);
-    return true;
-  } catch (e) {
-    console.warn('Audio init failed:', e);
-    return false;
-  }
+  getAudio();
+  return true;
 }
 
 export async function playMusic(volume = 0.5) {
   try {
-    if (!audioCtx) await initMusic();
-    if (audioCtx.state === 'suspended') await audioCtx.resume();
+    currentVolume = volume;
+    const a = getAudio();
 
-    if (bufferSource) {
-      bufferSource.stop();
-      bufferSource.disconnect();
+    if (fadeTimer) clearInterval(fadeTimer);
+
+    // If starting from stopped, fade in smoothly
+    a.volume = 0;
+    const playPromise = a.play();
+    if (playPromise !== undefined) {
+      await playPromise;
     }
 
-    const buffer = createMelodyBuffer(audioCtx);
-    bufferSource = audioCtx.createBufferSource();
-    bufferSource.buffer = buffer;
-    bufferSource.loop = true;
-    bufferSource.connect(gainNode);
-    bufferSource.start(0);
-
-    // Fade in
-    gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 1.5);
-    currentVolume = volume;
     isPlaying = true;
+
+    // Smooth fade in over 1.2 seconds
+    const targetVol = volume;
+    const step = targetVol / 20;
+    fadeTimer = setInterval(() => {
+      if (a.volume + step >= targetVol) {
+        a.volume = targetVol;
+        clearInterval(fadeTimer);
+        fadeTimer = null;
+      } else {
+        a.volume = Math.min(1, a.volume + step);
+      }
+    }, 60);
+
     return true;
   } catch (e) {
-    console.warn('Music play failed:', e);
+    console.warn('Playback error (requires user gesture):', e);
     return false;
   }
 }
 
 export function pauseMusic() {
-  if (!gainNode || !audioCtx) return;
-  gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-  gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
-  setTimeout(() => {
-    if (bufferSource) {
-      try { bufferSource.stop(); } catch (_) {}
+  const a = getAudio();
+  if (fadeTimer) clearInterval(fadeTimer);
+
+  // Smooth fade out over 300ms
+  const step = a.volume / 8;
+  fadeTimer = setInterval(() => {
+    if (a.volume - step <= 0.05) {
+      a.volume = 0;
+      a.pause();
+      isPlaying = false;
+      clearInterval(fadeTimer);
+      fadeTimer = null;
+    } else {
+      a.volume = Math.max(0, a.volume - step);
     }
-    isPlaying = false;
-  }, 500);
+  }, 40);
 }
 
 export function resumeMusic() {
@@ -126,9 +93,9 @@ export function resumeMusic() {
 
 export function setVolume(vol) {
   currentVolume = vol;
-  if (!gainNode || !audioCtx) return;
-  gainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-  gainNode.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + 0.1);
+  const a = getAudio();
+  if (fadeTimer) clearInterval(fadeTimer);
+  a.volume = Math.max(0, Math.min(1, vol));
 }
 
 export function getIsPlaying() {

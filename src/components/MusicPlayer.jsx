@@ -1,12 +1,12 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { playMusic, pauseMusic, resumeMusic, setVolume, getIsPlaying } from '../utils/musicPlayer';
+import { playMusic, pauseMusic, setVolume } from '../utils/musicPlayer';
 
 export default function MusicPlayer({ visible, autoStart }) {
   const [playing, setPlaying] = useState(false);
   const [vol, setVol] = useState(0.5);
   const startedRef = useRef(false);
 
-  // Auto-start when autoStart becomes true
+  // Auto-start when autoStart becomes true (after user interaction)
   useEffect(() => {
     if (autoStart && !startedRef.current) {
       startedRef.current = true;
@@ -42,7 +42,7 @@ export default function MusicPlayer({ visible, autoStart }) {
         className="music-btn"
         onClick={handleToggle}
         aria-label={playing ? 'Pause music' : 'Play music'}
-        title={playing ? 'Pause' : 'Play'}
+        title={playing ? 'Pause "The Way I Love You"' : 'Play "The Way I Love You" by Michal Leah'}
       >
         {playing ? (
           /* Pause icon pixel-style */
@@ -60,7 +60,13 @@ export default function MusicPlayer({ visible, autoStart }) {
           </svg>
         )}
       </button>
-      <span className="music-label">{playing ? '♫ ON' : '♫ OFF'}</span>
+      <span
+        className="music-label"
+        title="Michal Leah - The Way I Love You"
+        style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+      >
+        {playing ? '♫ THE WAY I LOVE YOU' : '♫ OFF'}
+      </span>
       <input
         type="range"
         className="music-volume"
